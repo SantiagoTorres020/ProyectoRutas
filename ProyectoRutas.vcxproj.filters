@@ -23,4 +23,8 @@
     <Text Include="edges.csv" />
     <Text Include="nodes.csv" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Documentos\limpieza\limpieza.py" />
+    <None Include=".gitignore" />
+  </ItemGroup>
 </Project>

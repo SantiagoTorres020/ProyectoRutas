@@ -20,7 +20,8 @@ vector<string> separarLinea(string linea, char separador)
     string parte;
     stringstream ss(linea);
 
-    while (getline(ss, parte, separador)) {
+    while (getline(ss, parte, separador)) 
+    {
         partes.push_back(parte);
     }
 
@@ -29,8 +30,7 @@ vector<string> separarLinea(string linea, char separador)
 
 int main() 
 {
-    //Leer Nodos
-    ifstream archivoNodos("nodes.csv");
+    ifstream archivoNodos("nodes_limpio.csv");
 
     if (!archivoNodos.is_open()) 
     {
@@ -57,7 +57,7 @@ int main()
             continue;
         }
 
-        int node_id = stoi(datos[0]); // node_id: identificador unico del nodo
+        int node_id = stoi(datos[0]); 
 
         if (node_id > mayorIdNodo) 
         {
@@ -72,10 +72,9 @@ int main()
     cout << "Nodos leidos desde nodes.csv: " << cantidadNodos << endl;
     cout << "Mayor ID de nodo encontrado: " << mayorIdNodo << endl;
 
-    vector<vector<Edge>> grafo(mayorIdNodo + 1); //lista de adyacencia.
+    vector<vector<Edge>> grafo(mayorIdNodo + 1);
 
-    //Leer aristas
-    ifstream archivoAristas("edges.csv");
+    ifstream archivoAristas("edges_limpio.csv");
 
     if (!archivoAristas.is_open()) 
     {
@@ -86,7 +85,6 @@ int main()
     getline(archivoAristas, linea);
 
     int filasLeidas = 0;
-    int aristasValidas = 0;
     int aristasDescartadas = 0;
     int aristasGuardadasEnGrafo = 0;
 
@@ -136,7 +134,6 @@ int main()
             aristasGuardadasEnGrafo++;
         }
 
-        aristasValidas++;
     }
 
     archivoAristas.close();
@@ -145,7 +142,6 @@ int main()
     cout << "Resumen de carga del grafo" << endl;
     cout << "--------------------------" << endl;
     cout << "Filas leidas desde edges.csv: " << filasLeidas << endl;
-    cout << "Aristas validas originales: " << aristasValidas << endl;
     cout << "Aristas descartadas: " << aristasDescartadas << endl;
     cout << "Aristas guardadas en la lista de adyacencia: " << aristasGuardadasEnGrafo << endl;
     cout << "Cantidad de posiciones en el grafo: " << grafo.size() << endl;
