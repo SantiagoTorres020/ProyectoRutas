@@ -123,7 +123,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ProyectoRutas.cpp" />
+    <ClCompile Include="Arista.cpp" />
+    <ClCompile Include="Grafo.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="edges.csv">
@@ -136,6 +138,10 @@
   <ItemGroup>
     <None Include="..\..\..\..\Documentos\limpieza\limpieza.py" />
     <None Include=".gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Arista.h" />
+    <ClInclude Include="Grafo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
