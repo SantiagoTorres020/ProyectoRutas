@@ -62,6 +62,55 @@ vector<int> recorrerComponenteBFS(
     return nodosComponente;
 }
 
+void analizarComponentesDebiles(
+    const vector<vector<int>>& grafoNoDirigido,
+    const vector<bool>& nodoExiste,
+    int cantidadNodos
+)
+{
+    vector<bool> visitado(grafoNoDirigido.size(), false);
+
+    int cantidadComponentes = 0;
+    vector<int> componenteGigante;
+
+    for (int nodo = 0; nodo < grafoNoDirigido.size(); nodo++)
+    {
+        if (nodoExiste[nodo] && !visitado[nodo])
+        {
+            vector<int> componenteActual = recorrerComponenteBFS(
+                nodo,
+                grafoNoDirigido,
+                visitado
+            );
+
+            cantidadComponentes++;
+
+            if (componenteActual.size() > componenteGigante.size())
+            {
+                componenteGigante = componenteActual;
+            }
+        }
+    }
+
+    double porcentaje = 0;
+
+    if (cantidadNodos > 0)
+    {
+        porcentaje =
+            100.0 * componenteGigante.size() / cantidadNodos;
+    }
+
+    cout << endl;
+    cout << "Analisis de componentes debilmente conexas" << endl;
+    cout << "-----------------------------------------" << endl;
+    cout << "Cantidad total de islas viales: "
+        << cantidadComponentes << endl;
+    cout << "Cantidad de nodos en la componente gigante: "
+        << componenteGigante.size() << endl;
+    cout << "Porcentaje de nodos en la componente gigante: "
+        << porcentaje << "%" << endl;
+}
+
 int main()
 {
     ifstream archivoNodos("nodes_limpio.csv");
@@ -77,6 +126,7 @@ int main()
 
     int cantidadNodos = 0;
     int mayorIdNodo = -1;
+    vector<int> idsNodos;
 
     while (getline(archivoNodos, linea))
     {
@@ -99,6 +149,7 @@ int main()
             mayorIdNodo = node_id;
         }
 
+        idsNodos.push_back(node_id);
         cantidadNodos++;
     }
 
@@ -106,51 +157,17 @@ int main()
 
     cout << "Nodos leidos desde nodes_limpio.csv: "
         << cantidadNodos << endl;
-
     cout << "Mayor ID de nodo encontrado: "
         << mayorIdNodo << endl;
 
     vector<vector<Edge>> grafo(mayorIdNodo + 1);
-
-    // Se utiliza únicamente para componentes débiles.
     vector<vector<int>> grafoNoDirigido(mayorIdNodo + 1);
-
-    // Permite distinguir nodos reales de posiciones vacías.
     vector<bool> nodoExiste(mayorIdNodo + 1, false);
 
-    ifstream archivoNodosExistentes("nodes_limpio.csv");
-
-    if (!archivoNodosExistentes.is_open())
+    for (int id : idsNodos)
     {
-        cout << "Error: no se pudo volver a abrir nodes_limpio.csv" << endl;
-        return 1;
+        nodoExiste[id] = true;
     }
-
-    getline(archivoNodosExistentes, linea);
-
-    while (getline(archivoNodosExistentes, linea))
-    {
-        if (linea.empty())
-        {
-            continue;
-        }
-
-        vector<string> datos = separarLinea(linea, ',');
-
-        if (datos.size() < 3)
-        {
-            continue;
-        }
-
-        int node_id = stoi(datos[0]);
-
-        if (node_id >= 0 && node_id <= mayorIdNodo)
-        {
-            nodoExiste[node_id] = true;
-        }
-    }
-
-    archivoNodosExistentes.close();
 
     ifstream archivoAristas("edges_limpio.csv");
 
@@ -183,19 +200,12 @@ int main()
             continue;
         }
 
-        string osm_id = datos[0];
         int from_id = stoi(datos[1]);
         int to_id = stoi(datos[2]);
         double distance_m = stod(datos[3]);
         string fclass = datos[4];
         int oneway = stoi(datos[5]);
-
-        double maxspeed = 0;
-
-        if (datos[6] != "")
-        {
-            maxspeed = stod(datos[6]);
-        }
+        double maxspeed = stod(datos[6]);
 
         if (
             from_id < 0 ||
@@ -232,7 +242,6 @@ int main()
             aristasGuardadasEnGrafo++;
         }
 
-        // Para componentes débiles se ignora el sentido.
         grafoNoDirigido[from_id].push_back(to_id);
         grafoNoDirigido[to_id].push_back(from_id);
     }
@@ -244,60 +253,18 @@ int main()
     cout << "--------------------------" << endl;
     cout << "Filas leidas desde edges_limpio.csv: "
         << filasLeidas << endl;
-
     cout << "Aristas descartadas: "
         << aristasDescartadas << endl;
-
     cout << "Aristas guardadas en la lista de adyacencia: "
         << aristasGuardadasEnGrafo << endl;
-
     cout << "Cantidad de posiciones en el grafo: "
         << grafo.size() << endl;
 
-    vector<bool> visitado(mayorIdNodo + 1, false);
-
-    int cantidadComponentes = 0;
-    vector<int> componenteGigante;
-
-    for (int nodo = 0; nodo <= mayorIdNodo; nodo++)
-    {
-        if (nodoExiste[nodo] && !visitado[nodo])
-        {
-            vector<int> componenteActual = recorrerComponenteBFS(
-                nodo,
-                grafoNoDirigido,
-                visitado
-            );
-
-            cantidadComponentes++;
-
-            if (componenteActual.size() > componenteGigante.size())
-            {
-                componenteGigante = componenteActual;
-            }
-        }
-    }
-
-    double porcentajeComponenteGigante = 0;
-
-    if (cantidadNodos > 0)
-    {
-        porcentajeComponenteGigante =
-            100.0 * componenteGigante.size() / cantidadNodos;
-    }
-
-    cout << endl;
-    cout << "Analisis de componentes debilmente conexas" << endl;
-    cout << "-----------------------------------------" << endl;
-
-    cout << "Cantidad total de islas viales: "
-        << cantidadComponentes << endl;
-
-    cout << "Cantidad de nodos en la componente gigante: "
-        << componenteGigante.size() << endl;
-
-    cout << "Porcentaje de nodos en la componente gigante: "
-        << porcentajeComponenteGigante << "%" << endl;
+    analizarComponentesDebiles(
+        grafoNoDirigido,
+        nodoExiste,
+        cantidadNodos
+    );
 
     return 0;
 }
