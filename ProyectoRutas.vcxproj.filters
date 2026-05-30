@@ -24,7 +24,7 @@
     <Text Include="nodes.csv" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Documentos\limpieza\limpieza.py" />
     <None Include=".gitignore" />
+    <None Include="limpieza.py" />
   </ItemGroup>
 </Project>

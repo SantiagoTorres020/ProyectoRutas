@@ -3,24 +3,26 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <queue>
 
 using namespace std;
 
-struct Edge {
-    int to;                 // to: nodo destino al que llega la calle
-    double distance_m;      // distance_m: distancia de la calle en metros
-    string fclass;          // fclass: tipo de via, por ejemplo residential, primary, secondary
-    int oneway;             // oneway: indica si la calle es de un solo sentido
-    double maxspeed;        // maxspeed: velocidad maxima registrada
+struct Edge
+{
+    int to;
+    double distance_m;
+    string fclass;
+    int oneway;
+    double maxspeed;
 };
 
-vector<string> separarLinea(string linea, char separador) 
+vector<string> separarLinea(string linea, char separador)
 {
     vector<string> partes;
     string parte;
     stringstream ss(linea);
 
-    while (getline(ss, parte, separador)) 
+    while (getline(ss, parte, separador))
     {
         partes.push_back(parte);
     }
@@ -28,13 +30,45 @@ vector<string> separarLinea(string linea, char separador)
     return partes;
 }
 
-int main() 
+vector<int> recorrerComponenteBFS(
+    int nodoInicial,
+    const vector<vector<int>>& grafoNoDirigido,
+    vector<bool>& visitado
+)
+{
+    vector<int> nodosComponente;
+    queue<int> cola;
+
+    visitado[nodoInicial] = true;
+    cola.push(nodoInicial);
+
+    while (!cola.empty())
+    {
+        int nodoActual = cola.front();
+        cola.pop();
+
+        nodosComponente.push_back(nodoActual);
+
+        for (int vecino : grafoNoDirigido[nodoActual])
+        {
+            if (!visitado[vecino])
+            {
+                visitado[vecino] = true;
+                cola.push(vecino);
+            }
+        }
+    }
+
+    return nodosComponente;
+}
+
+int main()
 {
     ifstream archivoNodos("nodes_limpio.csv");
 
-    if (!archivoNodos.is_open()) 
+    if (!archivoNodos.is_open())
     {
-        cout << "Error: no se pudo abrir nodes.csv" << endl;
+        cout << "Error: no se pudo abrir nodes_limpio.csv" << endl;
         return 1;
     }
 
@@ -44,7 +78,7 @@ int main()
     int cantidadNodos = 0;
     int mayorIdNodo = -1;
 
-    while (getline(archivoNodos, linea)) 
+    while (getline(archivoNodos, linea))
     {
         if (linea.empty())
         {
@@ -53,13 +87,14 @@ int main()
 
         vector<string> datos = separarLinea(linea, ',');
 
-        if (datos.size() < 3) {
+        if (datos.size() < 3)
+        {
             continue;
         }
 
-        int node_id = stoi(datos[0]); 
+        int node_id = stoi(datos[0]);
 
-        if (node_id > mayorIdNodo) 
+        if (node_id > mayorIdNodo)
         {
             mayorIdNodo = node_id;
         }
@@ -69,16 +104,59 @@ int main()
 
     archivoNodos.close();
 
-    cout << "Nodos leidos desde nodes.csv: " << cantidadNodos << endl;
-    cout << "Mayor ID de nodo encontrado: " << mayorIdNodo << endl;
+    cout << "Nodos leidos desde nodes_limpio.csv: "
+        << cantidadNodos << endl;
+
+    cout << "Mayor ID de nodo encontrado: "
+        << mayorIdNodo << endl;
 
     vector<vector<Edge>> grafo(mayorIdNodo + 1);
 
+    // Se utiliza únicamente para componentes débiles.
+    vector<vector<int>> grafoNoDirigido(mayorIdNodo + 1);
+
+    // Permite distinguir nodos reales de posiciones vacías.
+    vector<bool> nodoExiste(mayorIdNodo + 1, false);
+
+    ifstream archivoNodosExistentes("nodes_limpio.csv");
+
+    if (!archivoNodosExistentes.is_open())
+    {
+        cout << "Error: no se pudo volver a abrir nodes_limpio.csv" << endl;
+        return 1;
+    }
+
+    getline(archivoNodosExistentes, linea);
+
+    while (getline(archivoNodosExistentes, linea))
+    {
+        if (linea.empty())
+        {
+            continue;
+        }
+
+        vector<string> datos = separarLinea(linea, ',');
+
+        if (datos.size() < 3)
+        {
+            continue;
+        }
+
+        int node_id = stoi(datos[0]);
+
+        if (node_id >= 0 && node_id <= mayorIdNodo)
+        {
+            nodoExiste[node_id] = true;
+        }
+    }
+
+    archivoNodosExistentes.close();
+
     ifstream archivoAristas("edges_limpio.csv");
 
-    if (!archivoAristas.is_open()) 
+    if (!archivoAristas.is_open())
     {
-        cout << "Error: no se pudo abrir edges.csv" << endl;
+        cout << "Error: no se pudo abrir edges_limpio.csv" << endl;
         return 1;
     }
 
@@ -88,9 +166,9 @@ int main()
     int aristasDescartadas = 0;
     int aristasGuardadasEnGrafo = 0;
 
-    while (getline(archivoAristas, linea)) 
+    while (getline(archivoAristas, linea))
     {
-        if (linea.empty()) 
+        if (linea.empty())
         {
             continue;
         }
@@ -99,41 +177,64 @@ int main()
 
         vector<string> datos = separarLinea(linea, ',');
 
-        if (datos.size() < 7) 
+        if (datos.size() < 7)
         {
             aristasDescartadas++;
             continue;
         }
 
-        string osm_id = datos[0];           // osm_id: identificador de la calle en OpenStreetMap
-        int from_id = stoi(datos[1]);       // from_id: nodo origen de la calle
-        int to_id = stoi(datos[2]);         // to_id: nodo destino de la calle
-        double distance_m = stod(datos[3]); // distance_m: longitud de la calle en metros
-        string fclass = datos[4];           // fclass: tipo de via
-        int oneway = stoi(datos[5]);        // oneway: 1 si es un solo sentido, 0 si es doble sentido
+        string osm_id = datos[0];
+        int from_id = stoi(datos[1]);
+        int to_id = stoi(datos[2]);
+        double distance_m = stod(datos[3]);
+        string fclass = datos[4];
+        int oneway = stoi(datos[5]);
 
-        double maxspeed = 0;                // maxspeed: velocidad maxima, si esta vacia se guarda como 0
+        double maxspeed = 0;
 
-        if (datos[6] != "") 
+        if (datos[6] != "")
         {
             maxspeed = stod(datos[6]);
         }
 
-        if (from_id < 0 || to_id < 0 || from_id > mayorIdNodo || to_id > mayorIdNodo || distance_m <= 0) 
+        if (
+            from_id < 0 ||
+            to_id < 0 ||
+            from_id > mayorIdNodo ||
+            to_id > mayorIdNodo ||
+            distance_m <= 0
+            )
         {
             aristasDescartadas++;
             continue;
         }
 
-        grafo[from_id].push_back({ to_id, distance_m, fclass, oneway, maxspeed });
+        grafo[from_id].push_back({
+            to_id,
+            distance_m,
+            fclass,
+            oneway,
+            maxspeed
+            });
+
         aristasGuardadasEnGrafo++;
 
-        if (oneway == 0) 
+        if (oneway == 0)
         {
-            grafo[to_id].push_back({ from_id, distance_m, fclass, oneway, maxspeed });
+            grafo[to_id].push_back({
+                from_id,
+                distance_m,
+                fclass,
+                oneway,
+                maxspeed
+                });
+
             aristasGuardadasEnGrafo++;
         }
 
+        // Para componentes débiles se ignora el sentido.
+        grafoNoDirigido[from_id].push_back(to_id);
+        grafoNoDirigido[to_id].push_back(from_id);
     }
 
     archivoAristas.close();
@@ -141,10 +242,62 @@ int main()
     cout << endl;
     cout << "Resumen de carga del grafo" << endl;
     cout << "--------------------------" << endl;
-    cout << "Filas leidas desde edges.csv: " << filasLeidas << endl;
-    cout << "Aristas descartadas: " << aristasDescartadas << endl;
-    cout << "Aristas guardadas en la lista de adyacencia: " << aristasGuardadasEnGrafo << endl;
-    cout << "Cantidad de posiciones en el grafo: " << grafo.size() << endl;
+    cout << "Filas leidas desde edges_limpio.csv: "
+        << filasLeidas << endl;
+
+    cout << "Aristas descartadas: "
+        << aristasDescartadas << endl;
+
+    cout << "Aristas guardadas en la lista de adyacencia: "
+        << aristasGuardadasEnGrafo << endl;
+
+    cout << "Cantidad de posiciones en el grafo: "
+        << grafo.size() << endl;
+
+    vector<bool> visitado(mayorIdNodo + 1, false);
+
+    int cantidadComponentes = 0;
+    vector<int> componenteGigante;
+
+    for (int nodo = 0; nodo <= mayorIdNodo; nodo++)
+    {
+        if (nodoExiste[nodo] && !visitado[nodo])
+        {
+            vector<int> componenteActual = recorrerComponenteBFS(
+                nodo,
+                grafoNoDirigido,
+                visitado
+            );
+
+            cantidadComponentes++;
+
+            if (componenteActual.size() > componenteGigante.size())
+            {
+                componenteGigante = componenteActual;
+            }
+        }
+    }
+
+    double porcentajeComponenteGigante = 0;
+
+    if (cantidadNodos > 0)
+    {
+        porcentajeComponenteGigante =
+            100.0 * componenteGigante.size() / cantidadNodos;
+    }
+
+    cout << endl;
+    cout << "Analisis de componentes debilmente conexas" << endl;
+    cout << "-----------------------------------------" << endl;
+
+    cout << "Cantidad total de islas viales: "
+        << cantidadComponentes << endl;
+
+    cout << "Cantidad de nodos en la componente gigante: "
+        << componenteGigante.size() << endl;
+
+    cout << "Porcentaje de nodos en la componente gigante: "
+        << porcentajeComponenteGigante << "%" << endl;
 
     return 0;
 }
