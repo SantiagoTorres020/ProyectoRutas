@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Arista.cpp" />
+    <ClCompile Include="AristaKruskal.cpp" />
     <ClCompile Include="Grafo.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -141,6 +142,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Arista.h" />
+    <ClInclude Include="AristaKruskal.h" />
     <ClInclude Include="Grafo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

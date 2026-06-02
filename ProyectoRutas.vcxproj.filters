@@ -24,6 +24,9 @@
     <ClCompile Include="Grafo.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="AristaKruskal.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="edges.csv" />
@@ -38,6 +41,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="Grafo.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="AristaKruskal.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
