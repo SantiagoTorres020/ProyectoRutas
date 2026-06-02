@@ -20,6 +20,8 @@ int main()
 
     grafo.mostrarResumen();
 
+    grafo.analizarComponentesDebiles();
+
     int nodoOrigen;
 
     cout << endl;
